@@ -42,8 +42,14 @@ for (const pattern of wsConfig.packages ?? []) {
     const pkg = JSON.parse(original);
     if (pkg.private || !pkg.name || !pkg.version) continue;
 
+    // Apply publishConfig overrides (npm pack does not do this automatically)
+    const publishConfig = pkg.publishConfig ?? {};
+    const publishOverrides = Object.fromEntries(
+      Object.entries(publishConfig).filter(([k]) => !['access', 'registry', 'tag'].includes(k)),
+    );
     const patched = {
       ...pkg,
+      ...publishOverrides,
       dependencies: resolveDeps(pkg.dependencies),
       peerDependencies: resolveDeps(pkg.peerDependencies),
       optionalDependencies: resolveDeps(pkg.optionalDependencies),
