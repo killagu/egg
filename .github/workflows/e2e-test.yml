@@ -154,7 +154,7 @@ jobs:
 
       - name: Pack packages into tgz
         run: |
-          npm pack --workspaces
+          node ecosystem-ci/pack-all.mjs
 
       - name: Override dependencies from tgz in ${{ matrix.project.name }}
         working-directory: ecosystem-ci/${{ matrix.project.name }}
