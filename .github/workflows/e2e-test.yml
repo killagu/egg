@@ -47,25 +47,25 @@ jobs:
           - name: cnpmcore
             node-version: 24
             command: |
-              npm install
-              npm run lint -- --quiet
-              npm run typecheck
-              npm run build
-              npm run prepublishOnly
+              ut install
+              ut run lint -- --quiet
+              ut run typecheck
+              ut run build
+              ut run prepublishOnly
 
               # Clean build artifacts to avoid double-loading (src + dist)
-              npm run clean
+              ut run clean
 
               # Run the full test suite
               echo "Preparing databases..."
               mysql -h 127.0.0.1 -u root -e "CREATE DATABASE IF NOT EXISTS cnpmcore_unittest"
               CNPMCORE_DATABASE_NAME=cnpmcore_unittest bash ./prepare-database-mysql.sh
               CNPMCORE_DATABASE_NAME=cnpmcore bash ./prepare-database-mysql.sh
-              npm run test:local
+              ut run test:local
 
               # Deployment test: start the app and verify it boots correctly
-              npm run clean
-              npm run tsc:prod
+              ut run clean
+              ut run tsc:prod
               # Overlay compiled .js onto source locations so both egg loader
               # and tegg module scanner find .js files at the expected paths
               cp -r dist/* .
@@ -120,18 +120,18 @@ jobs:
             command: |
               # examples/helloworld https://github.com/eggjs/examples/blob/master/helloworld/package.json
               cd helloworld
-              npm install
-              npm run lint
-              npm run test
-              npm run prepublishOnly
+              ut install
+              ut run lint
+              ut run test
+              ut run prepublishOnly
               cd ..
 
               # examples/hello-tegg https://github.com/eggjs/examples/blob/master/hello-tegg/package.json
               cd hello-tegg
-              npm install
-              npm run lint
-              npm run test
-              npm run prepublishOnly
+              ut install
+              ut run lint
+              ut run test
+              ut run prepublishOnly
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - uses: ./.github/actions/clone
