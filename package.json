@@ -8,6 +8,16 @@
     "type": "git",
     "url": "git+https://github.com/eggjs/egg.git"
   },
+  "workspaces": [
+    "packages/*",
+    "plugins/*",
+    "examples/*",
+    "tools/*",
+    "site",
+    "tegg/core/*",
+    "tegg/plugin/*",
+    "tegg/standalone/*"
+  ],
   "files": [
     "README.md"
   ],
@@ -66,8 +76,12 @@
     "tsdown": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
+    "unplugin-unused": "catalog:",
     "urllib": "catalog:",
     "vitest": "catalog:"
+  },
+  "overrides": {
+    "vite": "npm:rolldown-vite@^7.1.13"
   },
   "lint-staged": {
     "*": [
