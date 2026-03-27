@@ -1,8 +1,4 @@
-/**
- * Pack all non-private workspace packages into the workspace root.
- * Replicates `pnpm -r pack` behavior (pnpm places tarballs in workspace root).
 import { execSync } from 'node:child_process';
- */
 import { readFileSync } from 'node:fs';
 import { glob } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
