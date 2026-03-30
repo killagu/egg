@@ -9,6 +9,7 @@ import yaml from 'js-yaml';
 const rootDir = join(fileURLToPath(import.meta.url), '../..');
 const wsConfig = yaml.load(readFileSync(join(rootDir, 'pnpm-workspace.yaml'), 'utf8'));
 const catalog = wsConfig.catalog ?? {};
+const catalogs = wsConfig.catalogs ?? {};
 
 // Build a map of workspace package versions for resolving workspace: protocol
 const workspaceVersions = {};
@@ -22,6 +23,10 @@ for (const pattern of wsConfig.packages ?? []) {
 function resolveVersion(name, version) {
   if (typeof version !== 'string') return version;
   if (version === 'catalog:' || version.startsWith('catalog:')) {
+    const catalogName = version.slice('catalog:'.length) || '';
+    if (catalogName) {
+      return catalogs[catalogName]?.[name] ?? version;
+    }
     return catalog[name] ?? version;
   }
   if (version.startsWith('workspace:')) {
