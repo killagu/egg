@@ -166,6 +166,8 @@ jobs:
         run: ut install --from pnpm
 
       - name: Run tests
+        env:
+          NO_COLOR: '1'
         run: ut run ci
 
       - name: Run example tests
