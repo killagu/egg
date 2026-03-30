@@ -257,7 +257,7 @@ jobs:
       - name: Run tests
         run: |
           ut run build
-          ut run ci --workspace ./tools/scripts
+          ut run ci --workspace tools/scripts
 
       - name: Code Coverage
         if: ${{ matrix.os != 'windows-latest' }}

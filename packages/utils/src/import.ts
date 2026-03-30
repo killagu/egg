@@ -359,6 +359,13 @@ export function importResolve(filepath: string, options?: ImportResolveOptions):
             debug('[importResolve:importMetaResolveFromPaths] %o => %o', filepath, moduleFilePath);
             break;
           }
+          // ESM resolver may omit extensions for legacy packages without "exports"
+          const withExt = tryToResolveFromFile(resolved);
+          if (withExt) {
+            moduleFilePath = withExt;
+            debug('[importResolve:importMetaResolveFromPaths:withExt] %o => %o', filepath, moduleFilePath);
+            break;
+          }
         } catch (err) {
           lastErr = err as Error;
           debug('[importResolve:importMetaResolveFromPaths:error] path %o, %o => %o', p, filepath, err);
@@ -379,7 +386,13 @@ export function importResolve(filepath: string, options?: ImportResolveOptions):
         debug('[importResolve] import.meta.resolve %o => %o', filepath, moduleFilePath);
         const stat = fs.statSync(moduleFilePath, { throwIfNoEntry: false });
         if (!stat?.isFile()) {
-          throw new TypeError(`Cannot find module ${filepath}, because ${moduleFilePath} does not exists`);
+          // ESM resolver may omit extensions for legacy packages without "exports"
+          const withExt = tryToResolveFromFile(moduleFilePath);
+          if (withExt) {
+            moduleFilePath = withExt;
+          } else {
+            throw new TypeError(`Cannot find module ${filepath}, because ${moduleFilePath} does not exists`);
+          }
         }
       }
     } else {
