@@ -371,6 +371,15 @@ export function importResolve(filepath: string, options?: ImportResolveOptions):
           debug('[importResolve:importMetaResolveFromPaths:error] path %o, %o => %o', p, filepath, err);
         }
       }
+      // Fall back to require.resolve which handles CJS packages (auto-adds extensions)
+      if (!moduleFilePath) {
+        try {
+          moduleFilePath = getRequire().resolve(filepath, { paths });
+          debug('[importResolve:requireResolve] %o => %o', filepath, moduleFilePath);
+        } catch {
+          // ignore
+        }
+      }
       // Fall back to resolving from this module's context
       if (!moduleFilePath) {
         try {
