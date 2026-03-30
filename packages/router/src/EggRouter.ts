@@ -69,7 +69,7 @@ export class EggRouter extends Router {
   /**
    * @class
    * @param {Object} opts - Router options.
-   * @param {Application} app - Application object.
+   * @param {EggApplication} app - Application object.
    */
   constructor(opts: RouterOptions, app: EggApplication) {
     super(opts);
@@ -346,9 +346,9 @@ export class EggRouter extends Router {
 /**
  * resolve controller from string to function
  * @param {String|Function} controller input controller
- * @param {Application} app egg application instance
+ * @param {EggApplication} app egg application instance
  */
-function resolveController(controller: string | MiddlewareFunc | ResourcesController, app: Application) {
+function resolveController(controller: string | MiddlewareFunc | ResourcesController, app: EggApplication) {
   if (typeof controller === 'string') {
     // resolveController('foo.bar.Home', app)
     const actions = controller.split('.');
@@ -375,9 +375,9 @@ function resolveController(controller: string | MiddlewareFunc | ResourcesContro
  * 2. bind ctx to controller `this`
  *
  * @param  {Array} middlewares middlewares and controller(last middleware)
- * @param  {Application} app  egg application instance
+ * @param  {EggApplication} app  egg application instance
  */
-function convertMiddlewares(middlewares: (MiddlewareFunc | string | ResourcesController)[], app: Application) {
+function convertMiddlewares(middlewares: (MiddlewareFunc | string | ResourcesController)[], app: EggApplication) {
   // ensure controller is resolved
   const controller = resolveController(middlewares.pop()!, app);
   function wrappedController(ctx: any, next: Next) {
