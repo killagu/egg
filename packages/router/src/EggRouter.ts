@@ -56,7 +56,7 @@ const REST_MAP: Record<string, RestfulOptions> = {
   },
 };
 
-interface Application {
+interface EggApplication {
   controller: Record<string, any>;
 }
 
@@ -64,14 +64,14 @@ interface Application {
  * FIXME: move these patch into @eggjs/router
  */
 export class EggRouter extends Router {
-  readonly app: Application;
+  readonly app: EggApplication;
 
   /**
    * @class
    * @param {Object} opts - Router options.
    * @param {Application} app - Application object.
    */
-  constructor(opts: RouterOptions, app: Application) {
+  constructor(opts: RouterOptions, app: EggApplication) {
     super(opts);
     this.app = app;
   }
