@@ -92,11 +92,12 @@ export class ClusterApplication extends Coffee {
     // in the forked cluster process, so stdout stays free of ANSI escape codes
     // and test regex assertions that match plain-text output continue to pass.
     if (process.env.NO_COLOR) {
+      const prevEnv = (opt as Record<string, any>)?.env;
       opt = {
         ...opt,
         env: {
           ...process.env,
-          ...opt?.env,
+          ...prevEnv,
           FORCE_COLOR: '0',
         },
       };

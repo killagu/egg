@@ -66,7 +66,7 @@ export interface MockClusterOptions extends MockOptions {
   /**
    * opt pass to coffee, such as { execArgv: ['--debug'] }
    */
-  opt?: import('node:child_process').ForkOptions;
+  opt?: object;
   startMode?: 'process' | 'worker_threads';
 }
 
