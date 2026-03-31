@@ -166,6 +166,7 @@ jobs:
         run: ut install --from pnpm
 
       - name: Link workspace packages
+        if: ${{ matrix.os != 'windows-latest' }}
         shell: bash
         run: |
           # ut flat-hoisting may copy workspace packages instead of symlinking;
