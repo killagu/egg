@@ -7,7 +7,7 @@ import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 
 import { Cookies as ContextCookies } from '@eggjs/cookies';
-import { EggCore, Router } from '@eggjs/core';
+import { EggCore, Router, ManifestStore } from '@eggjs/core';
 import type { EggCoreOptions, Next, MiddlewareFunc as EggCoreMiddlewareFunc, ILifecycleBoot } from '@eggjs/core';
 import { utils as eggUtils } from '@eggjs/core';
 import { extend } from '@eggjs/extend2';
@@ -34,7 +34,7 @@ import {
 } from './core/httpclient.ts';
 import { createLoggers } from './core/logger.ts';
 import { create as createMessenger, type IMessenger } from './core/messenger/index.ts';
-import { convertObject } from './core/utils.ts';
+import { convertObject, createTransparentProxy } from './core/utils.ts';
 import type { EggApplicationLoader } from './loader/index.ts';
 import type { EggAppConfig } from './types.ts';
 
@@ -190,6 +190,7 @@ export class EggApplicationCore extends EggCore {
         const dumpStartTime = Date.now();
         this.dumpConfig();
         this.dumpTiming();
+        this.dumpManifest();
         this.coreLogger.info('[egg] dump config after ready, %sms', Date.now() - dumpStartTime);
       }),
     );
@@ -214,7 +215,7 @@ export class EggApplicationCore extends EggCore {
 
       // single process mode will close agent before app close
       if (this.type === 'application' && this.options.mode === 'single') {
-        await this.agent!.close();
+        await this.agent?.close();
       }
 
       for (const logger of this.loggers.values()) {
@@ -376,12 +377,21 @@ export class EggApplicationCore extends EggCore {
 
   /**
    * HttpClient instance
+   *
+   * Returns a transparent proxy that defers actual HttpClient construction
+   * until a method/property is first accessed. This allows plugins to modify
+   * `config.httpclient.lookup` or other options during lifecycle hooks
+   * (e.g. `configWillLoad`, `didLoad`) even after `app.httpClient` is
+   * first referenced.
+   *
    * @see https://github.com/node-modules/urllib
    * @member {HttpClient}
    */
   get httpClient(): HttpClient {
     if (!this.#httpClient) {
-      this.#httpClient = this.createHttpClient();
+      this.#httpClient = createTransparentProxy<HttpClient>({
+        createReal: () => this.createHttpClient(),
+      });
     }
     return this.#httpClient;
   }
@@ -530,6 +540,29 @@ export class EggApplicationCore extends EggCore {
       }
     } catch (err: any) {
       this.coreLogger.warn(`[egg] dumpTiming error: ${err.message}`);
+    }
+  }
+
+  /**
+   * Generate and save startup manifest for faster subsequent startups.
+   * Only generates when no valid manifest was loaded (avoids overwriting during manifest-accelerated starts).
+   */
+  dumpManifest(): void {
+    try {
+      // Skip in local env (manifest is not loaded there unless EGG_MANIFEST=true)
+      if (this.loader.serverEnv === 'local' && process.env.EGG_MANIFEST !== 'true') {
+        return;
+      }
+      // Skip if we loaded from a valid manifest (generatedAt is truthy)
+      if (this.loader.manifest.data.generatedAt) {
+        return;
+      }
+      const manifest = this.loader.generateManifest();
+      ManifestStore.write(this.baseDir, manifest).catch((err: Error) => {
+        this.coreLogger.warn('[egg] dumpManifest write error: %s', err.message);
+      });
+    } catch (err: any) {
+      this.coreLogger.warn('[egg] dumpManifest error: %s', err.message);
     }
   }
 

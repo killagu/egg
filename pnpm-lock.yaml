@@ -2974,6 +2974,9 @@ importers:
       '@eggjs/tegg-common-util':
         specifier: workspace:*
         version: link:../../core/common-util
+      '@eggjs/tegg-loader':
+        specifier: workspace:*
+        version: link:../../core/loader
       '@eggjs/utils':
         specifier: workspace:*
         version: link:../../../packages/utils
@@ -3658,6 +3661,9 @@ importers:
 
   tools/egg-bin:
     dependencies:
+      '@eggjs/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@eggjs/tegg-vitest':
         specifier: workspace:*
         version: link:../../tegg/core/vitest
