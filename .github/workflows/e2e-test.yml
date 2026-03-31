@@ -47,7 +47,7 @@ jobs:
           - name: cnpmcore
             node-version: 24
             command: |
-              npm install
+              npm install --force
               npm run lint -- --quiet
               npm run typecheck
               npm run build
