@@ -168,16 +168,15 @@ jobs:
       - name: Link workspace packages
         shell: bash
         run: |
-          # ut flat-hoisting may not link deeply nested workspace packages;
-          # create symlinks so Node.js ESM resolver can find them.
+          # ut flat-hoisting may copy workspace packages instead of symlinking;
+          # force proper symlinks so cross-workspace ESM imports resolve to source.
           for pkg in tegg/core/*/package.json tegg/plugin/*/package.json tegg/standalone/*/package.json; do
             [ -f "$pkg" ] || continue
             name=$(node -e "console.log(require('./$pkg').name)")
             dir=$(dirname "$pkg")
             link="node_modules/$name"
-            [ -e "$link" ] && continue
+            rm -rf "$link"
             mkdir -p "$(dirname "$link")"
-            # scoped packages are at node_modules/@scope/pkg, so ../../ reaches the repo root
             ln -sf "../../$dir" "$link"
             echo "$name -> $dir"
           done
