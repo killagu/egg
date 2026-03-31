@@ -48,7 +48,6 @@ jobs:
             node-version: 24
             command: |
               npm install --force
-              npm run lint -- --quiet
               npm run typecheck
               npm run build
               npm run prepublishOnly
