@@ -79,7 +79,7 @@ describe('plugin/orm/test/orm.test.ts', () => {
   });
 
   describe('raw query', () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
       const appModel = await appService.createApp({
         name: 'egg',
         desc: 'the framework',
