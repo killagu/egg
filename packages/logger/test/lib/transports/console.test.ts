@@ -10,6 +10,10 @@ import { rimraf } from '../../utils.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const loggerFile = path.join(__dirname, '../../fixtures/console_transport.ts');
+// Strip FORCE_COLOR so forked processes don't emit a NO_COLOR/FORCE_COLOR
+// conflict warning on stderr (ut run injects FORCE_COLOR=1).
+const { FORCE_COLOR: _, ...forkEnv } = process.env;
+const forkOpt = { env: forkEnv };
 const tmp = path.join(__dirname, '../../fixtures/tmp_console');
 
 afterEach(async () => {
@@ -58,7 +62,7 @@ describe('test/lib/transports/console.test.ts', () => {
   it('console level should be NONE', async () => {
     const options = { file: path.join(tmp, 'a.log'), flushInterval: 10 };
     await coffee
-      .fork(loggerFile, [JSON.stringify(options)])
+      .fork(loggerFile, [JSON.stringify(options)], forkOpt)
       .expect('stdout', '')
       .expect('stderr', '')
       .end();
@@ -88,7 +92,7 @@ describe('test/lib/transports/console.test.ts', () => {
   it('should not print any log to stdout/stderr when level = NONE', async () => {
     const options = { file: path.join(tmp, 'a.log'), level: 'NONE', flushInterval: 10 };
     await coffee
-      .fork(loggerFile, [JSON.stringify(options)])
+      .fork(loggerFile, [JSON.stringify(options)], forkOpt)
       .expect('stdout', '')
       .expect('stderr', '')
       .end();

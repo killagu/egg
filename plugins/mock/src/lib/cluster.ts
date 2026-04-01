@@ -78,7 +78,7 @@ export class ClusterApplication extends Coffee {
    * ```
    */
   constructor(options: MockClusterApplicationOptions) {
-    const opt = options.opt;
+    let opt = options.opt;
     delete options.opt;
 
     // incremental port
@@ -86,6 +86,21 @@ export class ClusterApplication extends Coffee {
     // Set 1 worker when test
     if (!options.workers) {
       options.workers = 1;
+    }
+
+    // When NO_COLOR is set (e.g., in CI), ensure FORCE_COLOR does not override it
+    // in the forked cluster process, so stdout stays free of ANSI escape codes
+    // and test regex assertions that match plain-text output continue to pass.
+    if (process.env.NO_COLOR) {
+      const prevEnv = (opt as Record<string, any>)?.env;
+      opt = {
+        ...opt,
+        env: {
+          ...process.env,
+          ...prevEnv,
+          FORCE_COLOR: '0',
+        },
+      };
     }
 
     const args = [JSON.stringify(options)];
