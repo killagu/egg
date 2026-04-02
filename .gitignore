@@ -117,4 +117,5 @@ tegg/plugin/tegg/test/fixtures/apps/**/*.js
 *.tgz
 
 ecosystem-ci/cnpmcore
-ecosystem-ci/examples
+ecosystem-ci/examples.utoo.toml
+.claude/
