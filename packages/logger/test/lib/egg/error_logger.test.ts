@@ -11,8 +11,6 @@ import { rimraf } from '../../utils.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const errorLoggerFile = path.join(__dirname, '../../fixtures/egg_error_logger.ts');
-const { FORCE_COLOR: _, ...forkEnv } = process.env;
-const forkOpt = { env: forkEnv };
 
 // coffee.fork() can't execute .ts files on Windows Node 20 (no native TypeScript support)
 describe.skipIf(process.platform === 'win32' && process.version.startsWith('v20.'))(
@@ -58,7 +56,7 @@ describe.skipIf(process.platform === 'win32' && process.version.startsWith('v20.
     it('can set NONE level', async () => {
       const options = { file: filepath, level: 'NONE', consoleLevel: 'NONE' };
       await coffee
-        .fork(errorLoggerFile, [JSON.stringify(options)], forkOpt)
+        .fork(errorLoggerFile, [JSON.stringify(options)])
         .expect('stdout', '')
         .expect('stderr', '')
         .end();
