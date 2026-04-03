@@ -1,3 +1,4 @@
+# CI workflow for egg monorepo
 name: CI
 
 on:
