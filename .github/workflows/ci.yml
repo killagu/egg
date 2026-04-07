@@ -38,6 +38,10 @@ jobs:
 
       - name: Install dependencies
         run: ut install --from pnpm
+        # ut install --from pnpm rewrites package.json (adds workspaces field);
+        # restore the original to keep oxfmt happy.
+      - name: Restore package.json after ut install
+        run: git checkout -- package.json
 
       - name: Run lint
         run: ut run lint
@@ -46,19 +50,7 @@ jobs:
         run: ut run typecheck
 
       - name: Run format check
-        run: |
-          ut run fmtcheck || {
-            echo "=== oxfmt version ==="
-            ./node_modules/.bin/oxfmt --version
-            echo "=== package.json (before) ==="
-            cat package.json
-            echo "=== oxfmt --write applied ==="
-            cp package.json /tmp/before.json
-            ./node_modules/.bin/oxfmt package.json || true
-            echo "=== diff ==="
-            diff -u /tmp/before.json package.json || true
-            exit 1
-          }
+        run: ut run fmtcheck
 
       - name: Run build
         run: ut run build
@@ -173,6 +165,10 @@ jobs:
 
       - name: Install dependencies
         run: ut install --from pnpm
+        # ut install --from pnpm rewrites package.json (adds workspaces field);
+        # restore the original to keep oxfmt happy.
+      - name: Restore package.json after ut install
+        run: git checkout -- package.json
 
       - name: Link workspace packages
         if: ${{ matrix.os != 'windows-latest' }}
@@ -234,6 +230,10 @@ jobs:
 
       - name: Install dependencies
         run: ut install --from pnpm
+        # ut install --from pnpm rewrites package.json (adds workspaces field);
+        # restore the original to keep oxfmt happy.
+      - name: Restore package.json after ut install
+        run: git checkout -- package.json
 
       - name: Run tests
         run: |
@@ -275,6 +275,10 @@ jobs:
 
       - name: Install dependencies
         run: ut install --from pnpm
+        # ut install --from pnpm rewrites package.json (adds workspaces field);
+        # restore the original to keep oxfmt happy.
+      - name: Restore package.json after ut install
+        run: git checkout -- package.json
 
       - name: Run tests
         run: |

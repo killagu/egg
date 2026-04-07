@@ -152,6 +152,9 @@ jobs:
       - name: Install dependencies
         run: ut install --from pnpm
 
+      - name: Restore package.json after ut install
+        run: git checkout -- package.json
+
       - name: Build all packages
         run: ut run build
 
