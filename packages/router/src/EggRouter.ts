@@ -56,7 +56,7 @@ const REST_MAP: Record<string, RestfulOptions> = {
   },
 };
 
-interface EggApplication {
+interface Application {
   controller: Record<string, any>;
 }
 
@@ -64,14 +64,14 @@ interface EggApplication {
  * FIXME: move these patch into @eggjs/router
  */
 export class EggRouter extends Router {
-  readonly app: EggApplication;
+  readonly app: Application;
 
   /**
    * @class
    * @param {Object} opts - Router options.
-   * @param {EggApplication} app - Application object.
+   * @param {Application} app - Application object.
    */
-  constructor(opts: RouterOptions, app: EggApplication) {
+  constructor(opts: RouterOptions, app: Application) {
     super(opts);
     this.app = app;
   }
@@ -346,9 +346,9 @@ export class EggRouter extends Router {
 /**
  * resolve controller from string to function
  * @param {String|Function} controller input controller
- * @param {EggApplication} app egg application instance
+ * @param {Application} app egg application instance
  */
-function resolveController(controller: string | MiddlewareFunc | ResourcesController, app: EggApplication) {
+function resolveController(controller: string | MiddlewareFunc | ResourcesController, app: Application) {
   if (typeof controller === 'string') {
     // resolveController('foo.bar.Home', app)
     const actions = controller.split('.');
@@ -375,9 +375,9 @@ function resolveController(controller: string | MiddlewareFunc | ResourcesContro
  * 2. bind ctx to controller `this`
  *
  * @param  {Array} middlewares middlewares and controller(last middleware)
- * @param  {EggApplication} app  egg application instance
+ * @param  {Application} app  egg application instance
  */
-function convertMiddlewares(middlewares: (MiddlewareFunc | string | ResourcesController)[], app: EggApplication) {
+function convertMiddlewares(middlewares: (MiddlewareFunc | string | ResourcesController)[], app: Application) {
   // ensure controller is resolved
   const controller = resolveController(middlewares.pop()!, app);
   function wrappedController(ctx: any, next: Next) {
