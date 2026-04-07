@@ -38,10 +38,6 @@ jobs:
 
       - name: Install dependencies
         run: ut install --from pnpm
-        # ut install --from pnpm rewrites package.json (adds workspaces field);
-        # restore the original to keep oxfmt happy.
-      - name: Restore package.json after ut install
-        run: git checkout -- package.json
 
       - name: Run lint
         run: ut run lint
@@ -165,10 +161,6 @@ jobs:
 
       - name: Install dependencies
         run: ut install --from pnpm
-        # ut install --from pnpm rewrites package.json (adds workspaces field);
-        # restore the original to keep oxfmt happy.
-      - name: Restore package.json after ut install
-        run: git checkout -- package.json
 
       - name: Link workspace packages
         if: ${{ matrix.os != 'windows-latest' }}
@@ -230,10 +222,6 @@ jobs:
 
       - name: Install dependencies
         run: ut install --from pnpm
-        # ut install --from pnpm rewrites package.json (adds workspaces field);
-        # restore the original to keep oxfmt happy.
-      - name: Restore package.json after ut install
-        run: git checkout -- package.json
 
       - name: Run tests
         run: |
@@ -275,10 +263,6 @@ jobs:
 
       - name: Install dependencies
         run: ut install --from pnpm
-        # ut install --from pnpm rewrites package.json (adds workspaces field);
-        # restore the original to keep oxfmt happy.
-      - name: Restore package.json after ut install
-        run: git checkout -- package.json
 
       - name: Run tests
         run: |
