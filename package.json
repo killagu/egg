@@ -19,7 +19,7 @@
     "lint": "oxlint --type-aware --type-check --quiet",
     "fmt": "oxfmt",
     "typecheck": "ut run clean-dist && ut run typecheck --workspaces",
-    "fmtcheck": "oxfmt --check -c .oxfmtrc.json .",
+    "fmtcheck": "oxfmt --check .",
     "pretest": "ut run clean-dist && ut run pretest --workspaces --if-present",
     "test": "vitest run --bail 1 --retry 2 --testTimeout 20000 --hookTimeout 20000",
     "test:cov": "ut run test -- --coverage",
