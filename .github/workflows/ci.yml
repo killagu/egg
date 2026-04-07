@@ -162,23 +162,6 @@ jobs:
       - name: Install dependencies
         run: ut install --from pnpm
 
-      - name: Link workspace packages
-        if: ${{ matrix.os != 'windows-latest' }}
-        shell: bash
-        run: |
-          # ut flat-hoisting may copy workspace packages instead of symlinking;
-          # force proper symlinks so cross-workspace ESM imports resolve to source.
-          for pkg in tegg/core/*/package.json tegg/plugin/*/package.json tegg/standalone/*/package.json; do
-            [ -f "$pkg" ] || continue
-            name=$(node -e "console.log(require('./$pkg').name)")
-            dir=$(dirname "$pkg")
-            link="node_modules/$name"
-            rm -rf "$link"
-            mkdir -p "$(dirname "$link")"
-            ln -sf "../../$dir" "$link"
-            echo "$name -> $dir"
-          done
-
       - name: Run tests
         run: ut run ci
 
