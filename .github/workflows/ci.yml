@@ -208,7 +208,7 @@ jobs:
 
       - name: Run tests
         run: |
-          ut run build
+          ut run build --workspace @eggjs/bin
           ut run ci --workspace @eggjs/bin
 
       - name: Code Coverage
