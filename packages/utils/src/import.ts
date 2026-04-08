@@ -350,18 +350,8 @@ export function importResolve(filepath: string, options?: ImportResolveOptions):
       try {
         moduleFilePath = import.meta.resolve(filepath);
       } catch (err) {
-        // Node.js 24 ESM resolver throws ERR_MODULE_NOT_FOUND for CJS subpaths
-        // without an `exports` field (e.g. tsconfig-paths/register).  Fall
-        // back to require.resolve which honors caller-supplied paths and
-        // handles legacy CJS subpaths via Node.js standard module resolution.
         debug('[importResolve:error] import.meta.resolve %o => %o, options: %o', filepath, err, options);
-        try {
-          moduleFilePath = getRequire().resolve(filepath, { paths });
-          debug('[importResolve:requireResolveFallback] %o => %o', filepath, moduleFilePath);
-          return moduleFilePath;
-        } catch {
-          throw new ImportResolveError(filepath, paths, err as Error);
-        }
+        throw new ImportResolveError(filepath, paths, err as Error);
       }
       if (moduleFilePath.startsWith('file://')) {
         // resolve will return file:// URL on Linux and MacOS expect on Windows
@@ -370,16 +360,7 @@ export function importResolve(filepath: string, options?: ImportResolveOptions):
       debug('[importResolve] import.meta.resolve %o => %o', filepath, moduleFilePath);
       const stat = fs.statSync(moduleFilePath, { throwIfNoEntry: false });
       if (!stat?.isFile()) {
-        // Node.js 25 ESM resolver returns the extensionless path for CJS
-        // packages without an `exports` field (e.g. tsconfig-paths/register
-        // resolves to `.../register`, not `.../register.js`).  Probe for
-        // the actual file by appending common extensions.
-        const withExt = tryToResolveFromFile(moduleFilePath);
-        if (withExt) {
-          moduleFilePath = withExt;
-        } else {
-          throw new TypeError(`Cannot find module ${filepath}, because ${moduleFilePath} does not exists`);
-        }
+        throw new TypeError(`Cannot find module ${filepath}, because ${moduleFilePath} does not exists`);
       }
     } else {
       moduleFilePath = getRequire().resolve(filepath);
