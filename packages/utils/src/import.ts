@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { pathToFileURL, fileURLToPath } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { debuglog } from 'node:util';
 
 import { ImportResolveError } from './error/index.ts';
@@ -28,9 +28,6 @@ try {
   // If import.meta is not available, it's likely CJS
   isESM = false;
 }
-const nodeMajorVersion = parseInt(process.versions.node.split('.', 1)[0], 10);
-const supportImportMetaResolve = nodeMajorVersion >= 18;
-
 let _customRequire: NodeRequire;
 export function getRequire(): NodeRequire {
   if (!_customRequire) {
@@ -340,49 +337,18 @@ export function importResolve(filepath: string, options?: ImportResolveOptions):
     }
   }
 
-  const extname = path.extname(filepath);
-  if ((!isAbsolute && extname === '.json') || !isESM) {
-    moduleFilePath = getRequire().resolve(filepath, {
-      paths,
-    });
-  } else {
-    if (supportImportMetaResolve) {
-      try {
-        moduleFilePath = import.meta.resolve(filepath);
-      } catch (err) {
-        // Node.js 24 ESM resolver throws ERR_MODULE_NOT_FOUND for CJS
-        // subpaths without an `exports` field (e.g. tsconfig-paths/register).
-        // Fall back to require.resolve which auto-appends extensions.
-        debug('[importResolve:error] import.meta.resolve %o => %o, options: %o', filepath, err, options);
-        try {
-          moduleFilePath = getRequire().resolve(filepath, { paths });
-          debug('[importResolve:requireResolveFallback] %o => %o', filepath, moduleFilePath);
-          return moduleFilePath;
-        } catch {
-          throw new ImportResolveError(filepath, paths, err as Error);
-        }
-      }
-      if (moduleFilePath.startsWith('file://')) {
-        // resolve will return file:// URL on Linux and MacOS expect on Windows
-        moduleFilePath = fileURLToPath(moduleFilePath);
-      }
-      debug('[importResolve] import.meta.resolve %o => %o', filepath, moduleFilePath);
-      const stat = fs.statSync(moduleFilePath, { throwIfNoEntry: false });
-      if (!stat?.isFile()) {
-        // Node.js 25 ESM resolver returns the extensionless path for CJS
-        // packages without an `exports` field (e.g. tsconfig-paths/register
-        // resolves to `.../register`, not `.../register.js`).  Probe for
-        // the actual file by appending common extensions.
-        const withExt = tryToResolveFromFile(moduleFilePath);
-        if (withExt) {
-          moduleFilePath = withExt;
-        } else {
-          throw new TypeError(`Cannot find module ${filepath}, because ${moduleFilePath} does not exists`);
-        }
-      }
-    } else {
-      moduleFilePath = getRequire().resolve(filepath);
-    }
+  // Use require.resolve for both CJS and ESM: it honors caller-supplied
+  // `paths`, walks up the node_modules chain properly, reads the `exports`
+  // field, auto-appends extensions for legacy CJS subpaths, and resolves
+  // `.ts`/`.mjs` files alike.  `import.meta.resolve` was previously used
+  // for the ESM branch but it ignores `paths` (always uses this module's
+  // own context) and Node 24 throws ERR_MODULE_NOT_FOUND for CJS subpaths
+  // without an `exports` field — neither matches the desired semantics.
+  try {
+    moduleFilePath = getRequire().resolve(filepath, { paths });
+  } catch (err) {
+    debug('[importResolve:error] require.resolve %o => %o, options: %o', filepath, err, options);
+    throw new ImportResolveError(filepath, paths, err as Error);
   }
   debug('[importResolve:success] %o, options: %o => %o, isESM: %s', filepath, options, moduleFilePath, isESM);
   return moduleFilePath;
