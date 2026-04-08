@@ -347,65 +347,28 @@ export function importResolve(filepath: string, options?: ImportResolveOptions):
     });
   } else {
     if (supportImportMetaResolve) {
-      // Try resolving from each provided path using import.meta.resolve with parent URL.
-      // This avoids relying on the package manager hoisting modules to a shared location.
-      let lastErr: Error | undefined;
-      for (const p of paths) {
-        try {
-          const parentUrl = pathToFileURL(path.join(p, 'index.js')).toString();
-          let resolved = import.meta.resolve(filepath, parentUrl);
-          if (resolved.startsWith('file://')) {
-            resolved = fileURLToPath(resolved);
-          }
-          const stat = fs.statSync(resolved, { throwIfNoEntry: false });
-          if (stat?.isFile()) {
-            moduleFilePath = resolved;
-            debug('[importResolve:importMetaResolveFromPaths] %o => %o', filepath, moduleFilePath);
-            break;
-          }
-          // ESM resolver may omit extensions for legacy packages without "exports"
-          const withExt = tryToResolveFromFile(resolved);
-          if (withExt) {
-            moduleFilePath = withExt;
-            debug('[importResolve:importMetaResolveFromPaths:withExt] %o => %o', filepath, moduleFilePath);
-            break;
-          }
-        } catch (err) {
-          lastErr = err as Error;
-          debug('[importResolve:importMetaResolveFromPaths:error] path %o, %o => %o', p, filepath, err);
-        }
+      try {
+        moduleFilePath = import.meta.resolve(filepath);
+      } catch (err) {
+        debug('[importResolve:error] import.meta.resolve %o => %o, options: %o', filepath, err, options);
+        throw new ImportResolveError(filepath, paths, err as Error);
       }
-      // Fall back to require.resolve which handles CJS packages (auto-adds extensions)
-      if (!moduleFilePath) {
-        try {
-          moduleFilePath = getRequire().resolve(filepath, { paths });
-          debug('[importResolve:requireResolve] %o => %o', filepath, moduleFilePath);
-        } catch {
-          // ignore
-        }
+      if (moduleFilePath.startsWith('file://')) {
+        // resolve will return file:// URL on Linux and MacOS expect on Windows
+        moduleFilePath = fileURLToPath(moduleFilePath);
       }
-      // Fall back to resolving from this module's context
-      if (!moduleFilePath) {
-        try {
-          moduleFilePath = import.meta.resolve(filepath);
-        } catch (err) {
-          debug('[importResolve:error] import.meta.resolve %o => %o, options: %o', filepath, err, options);
-          throw new ImportResolveError(filepath, paths, (err ?? lastErr) as Error);
-        }
-        if (moduleFilePath.startsWith('file://')) {
-          // resolve will return file:// URL on Linux and MacOS expect on Windows
-          moduleFilePath = fileURLToPath(moduleFilePath);
-        }
-        debug('[importResolve] import.meta.resolve %o => %o', filepath, moduleFilePath);
-        const stat = fs.statSync(moduleFilePath, { throwIfNoEntry: false });
-        if (!stat?.isFile()) {
-          // ESM resolver may omit extensions for legacy packages without "exports"
-          const withExt = tryToResolveFromFile(moduleFilePath);
-          if (withExt) {
-            moduleFilePath = withExt;
-          } else {
-            throw new TypeError(`Cannot find module ${filepath}, because ${moduleFilePath} does not exists`);
-          }
+      debug('[importResolve] import.meta.resolve %o => %o', filepath, moduleFilePath);
+      const stat = fs.statSync(moduleFilePath, { throwIfNoEntry: false });
+      if (!stat?.isFile()) {
+        // Node.js 24 ESM resolver omits the file extension for CJS packages
+        // without an `exports` field (e.g. tsconfig-paths/register resolves
+        // to `.../register`, not `.../register.js`).  Probe for the actual
+        // file by appending common extensions.
+        const withExt = tryToResolveFromFile(moduleFilePath);
+        if (withExt) {
+          moduleFilePath = withExt;
+        } else {
+          throw new TypeError(`Cannot find module ${filepath}, because ${moduleFilePath} does not exists`);
         }
       }
     } else {
