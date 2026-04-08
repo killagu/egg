@@ -70,9 +70,6 @@
     "urllib": "catalog:",
     "vitest": "catalog:"
   },
-  "overrides": {
-    "vite": "npm:rolldown-vite@^7.1.13"
-  },
   "lint-staged": {
     "*": [
       "oxfmt --no-error-on-unmatched-pattern",
