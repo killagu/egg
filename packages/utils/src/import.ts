@@ -28,6 +28,8 @@ try {
   // If import.meta is not available, it's likely CJS
   isESM = false;
 }
+const nodeMajorVersion = parseInt(process.versions.node.split('.', 1)[0], 10);
+
 let _customRequire: NodeRequire;
 export function getRequire(): NodeRequire {
   if (!_customRequire) {
