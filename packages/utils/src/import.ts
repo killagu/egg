@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { debuglog } from 'node:util';
 
 import { ImportResolveError } from './error/index.ts';
@@ -29,6 +29,7 @@ try {
   isESM = false;
 }
 const nodeMajorVersion = parseInt(process.versions.node.split('.', 1)[0], 10);
+const supportImportMetaResolve = nodeMajorVersion >= 18;
 
 let _customRequire: NodeRequire;
 export function getRequire(): NodeRequire {
@@ -339,18 +340,31 @@ export function importResolve(filepath: string, options?: ImportResolveOptions):
     }
   }
 
-  // Use require.resolve for both CJS and ESM: it honors caller-supplied
-  // `paths`, walks up the node_modules chain properly, reads the `exports`
-  // field, auto-appends extensions for legacy CJS subpaths, and resolves
-  // `.ts`/`.mjs` files alike.  `import.meta.resolve` was previously used
-  // for the ESM branch but it ignores `paths` (always uses this module's
-  // own context) and Node 24 throws ERR_MODULE_NOT_FOUND for CJS subpaths
-  // without an `exports` field — neither matches the desired semantics.
-  try {
-    moduleFilePath = getRequire().resolve(filepath, { paths });
-  } catch (err) {
-    debug('[importResolve:error] require.resolve %o => %o, options: %o', filepath, err, options);
-    throw new ImportResolveError(filepath, paths, err as Error);
+  const extname = path.extname(filepath);
+  if ((!isAbsolute && extname === '.json') || !isESM) {
+    moduleFilePath = getRequire().resolve(filepath, {
+      paths,
+    });
+  } else {
+    if (supportImportMetaResolve) {
+      try {
+        moduleFilePath = import.meta.resolve(filepath);
+      } catch (err) {
+        debug('[importResolve:error] import.meta.resolve %o => %o, options: %o', filepath, err, options);
+        throw new ImportResolveError(filepath, paths, err as Error);
+      }
+      if (moduleFilePath.startsWith('file://')) {
+        // resolve will return file:// URL on Linux and MacOS expect on Windows
+        moduleFilePath = fileURLToPath(moduleFilePath);
+      }
+      debug('[importResolve] import.meta.resolve %o => %o', filepath, moduleFilePath);
+      const stat = fs.statSync(moduleFilePath, { throwIfNoEntry: false });
+      if (!stat?.isFile()) {
+        throw new TypeError(`Cannot find module ${filepath}, because ${moduleFilePath} does not exists`);
+      }
+    } else {
+      moduleFilePath = getRequire().resolve(filepath);
+    }
   }
   debug('[importResolve:success] %o, options: %o => %o, isESM: %s', filepath, options, moduleFilePath, isESM);
   return moduleFilePath;
