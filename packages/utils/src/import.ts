@@ -350,8 +350,18 @@ export function importResolve(filepath: string, options?: ImportResolveOptions):
       try {
         moduleFilePath = import.meta.resolve(filepath);
       } catch (err) {
+        // Node.js 24+ ESM resolver throws ERR_MODULE_NOT_FOUND for CJS
+        // subpaths without an `exports` field (e.g. `tsconfig-paths/register`).
+        // Fall back to require.resolve which honors caller-supplied `paths`
+        // and resolves legacy CJS subpaths via Node's standard CJS resolver.
         debug('[importResolve:error] import.meta.resolve %o => %o, options: %o', filepath, err, options);
-        throw new ImportResolveError(filepath, paths, err as Error);
+        try {
+          moduleFilePath = getRequire().resolve(filepath, { paths });
+          debug('[importResolve:requireResolveFallback] %o => %o', filepath, moduleFilePath);
+          return moduleFilePath;
+        } catch {
+          throw new ImportResolveError(filepath, paths, err as Error);
+        }
       }
       if (moduleFilePath.startsWith('file://')) {
         // resolve will return file:// URL on Linux and MacOS expect on Windows
