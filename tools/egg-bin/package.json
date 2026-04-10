@@ -54,7 +54,7 @@
     "build": "tsdown -c tsdown.config.ts",
     "typecheck": "tsgo --noEmit",
     "test": "vitest run",
-    "cov": "vitest run --coverage -c vitest.config.ts",
+    "cov": "vitest run --coverage",
     "ci": "npm run cov"
   },
   "dependencies": {
