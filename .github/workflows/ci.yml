@@ -206,10 +206,14 @@ jobs:
       - name: Install dependencies
         run: ut install --from pnpm
 
+      - name: Remove workspaces field (diagnostic)
+        run: node -e "const p=require('./package.json');delete p.workspaces;delete p.overrides;require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
+
       - name: Run tests
         run: |
-          ut run build --workspace @eggjs/bin
-          ut run ci --workspace @eggjs/bin
+          cd tools/egg-bin
+          npx tsdown -c tsdown.config.ts
+          npm run ci
 
       - name: Code Coverage
         # skip on windows, it will hangup on codecov https://github.com/codecov/codecov-action/issues/1787
