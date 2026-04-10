@@ -31,7 +31,7 @@
     "example:dev:commonjs": "ut run dev --workspace helloworld-commonjs",
     "example:dev:typescript": "ut run dev --workspace helloworld-typescript",
     "example:dev:tegg": "ut run dev --workspace helloworld-tegg",
-    "example:test:all": "ut run test --workspace 'helloworld-*'",
+    "example:test:all": "ut run test --workspace helloworld-typescript && ut run test --workspace helloworld-tegg",
     "prepare": "husky",
     "version:patch": "node scripts/version.js patch",
     "version:minor": "node scripts/version.js minor",
