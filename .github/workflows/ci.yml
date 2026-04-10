@@ -208,7 +208,7 @@ jobs:
 
       - name: Run tests
         run: |
-          ut run build -- --filter @eggjs/bin
+          ut run build -- --workspace ./tools/egg-bin
           ut run ci --workspace @eggjs/bin
 
       - name: Code Coverage
@@ -249,7 +249,7 @@ jobs:
 
       - name: Run tests
         run: |
-          ut run build -- --filter @eggjs/scripts
+          ut run build -- --workspace ./tools/scripts
           ut run ci --workspace tools/scripts
 
       - name: Code Coverage
