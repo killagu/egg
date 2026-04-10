@@ -207,9 +207,7 @@ jobs:
         run: ut install --from pnpm
 
       - name: Run tests
-        run: |
-          ut run build --workspace @eggjs/bin
-          ut run ci --workspace @eggjs/bin
+        run: ut run ci --workspace @eggjs/bin
 
       - name: Code Coverage
         # skip on windows, it will hangup on codecov https://github.com/codecov/codecov-action/issues/1787
