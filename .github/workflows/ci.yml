@@ -209,7 +209,7 @@ jobs:
       - name: Run tests
         run: |
           ut run build --workspace @eggjs/bin
-          ut run ci --workspace @eggjs/bin
+          cd tools/egg-bin && npm run ci
 
       - name: Code Coverage
         # skip on windows, it will hangup on codecov https://github.com/codecov/codecov-action/issues/1787
