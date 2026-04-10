@@ -53,7 +53,7 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsgo --noEmit",
-    "pretest": "tsdown",
+    "pretest": "tsdown -c tsdown.config.ts",
     "test": "vitest run",
     "cov": "vitest run --coverage",
     "ci": "npm run cov"
