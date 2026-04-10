@@ -51,6 +51,7 @@
     }
   },
   "scripts": {
+    "build": "tsdown",
     "typecheck": "tsgo --noEmit",
     "pretest": "tsdown",
     "test": "vitest run",
