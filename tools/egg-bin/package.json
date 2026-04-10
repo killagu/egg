@@ -51,7 +51,7 @@
     }
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown -c tsdown.config.ts",
     "typecheck": "tsgo --noEmit",
     "test": "vitest run",
     "cov": "vitest run --coverage",
