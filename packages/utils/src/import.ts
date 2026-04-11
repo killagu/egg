@@ -34,11 +34,7 @@ const supportImportMetaResolve = nodeMajorVersion >= 18;
 let _customRequire: NodeRequire;
 export function getRequire(): NodeRequire {
   if (!_customRequire) {
-    // In V8 snapshot builder context, the built-in `require` is a restricted
-    // `requireForUserSnapshot` that lacks `.extensions` and `.resolve` for
-    // user-land modules. Prefer `createRequire` when `require.extensions` is
-    // missing, so that file resolution (isSupportTypeScript, etc.) works.
-    if (typeof require !== 'undefined' && require.extensions) {
+    if (typeof require !== 'undefined') {
       _customRequire = require;
     } else {
       _customRequire = createRequire(process.cwd());
@@ -350,47 +346,8 @@ export function importResolve(filepath: string, options?: ImportResolveOptions):
       try {
         moduleFilePath = import.meta.resolve(filepath);
       } catch (err) {
-        // === Fallback 1: require.resolve for legacy CJS subpaths ===
-        //
-        // When `import.meta.resolve(filepath)` throws ERR_MODULE_NOT_FOUND,
-        // fall back to `require.resolve(filepath, { paths })` so callers
-        // can still resolve "legacy" CJS subpaths.
-        //
-        // This is reached for two combined reasons:
-        //
-        //   1. Node.js 22+ ESM resolver is strict about packages **without**
-        //      an `exports` field: subpaths must include an explicit file
-        //      extension (e.g. `tsconfig-paths/register.js`). Bare subpaths
-        //      like `tsconfig-paths/register` cause the resolver to throw,
-        //      because ESM does not auto-append `.js`/`.json`/`.node` the
-        //      way the CJS resolver does.
-        //
-        //   2. The manual node_modules walk above (`tryToResolve...`)
-        //      only checks `${p}/node_modules/<filepath>` plus two pnpm
-        //      sibling levels — it does **not** walk up the directory
-        //      tree the way Node's CJS resolver does. So a dependency
-        //      hoisted to a workspace-root `node_modules/` (typical for
-        //      pnpm/yarn workspaces) is not found by the manual walk and
-        //      falls through to `import.meta.resolve`.
-        //
-        // `require.resolve(..., { paths })` handles both: it auto-appends
-        // extensions AND walks up the directory tree from each `paths`
-        // entry until it finds the package. Removing this fallback would
-        // be a breaking change for `@eggjs/utils` consumers (both internal
-        // — e.g. `tools/egg-bin/src/baseCommand.ts` resolving
-        // `tsconfig-paths/register` — and any downstream npm package that
-        // imports `importResolve`).
-        //
-        // If `require.resolve` also fails, throw the original ESM error
-        // so the user sees the ESM resolver's diagnostic, not the CJS one.
         debug('[importResolve:error] import.meta.resolve %o => %o, options: %o', filepath, err, options);
-        try {
-          moduleFilePath = getRequire().resolve(filepath, { paths });
-          debug('[importResolve:requireResolveFallback] %o => %o', filepath, moduleFilePath);
-          return moduleFilePath;
-        } catch {
-          throw new ImportResolveError(filepath, paths, err as Error);
-        }
+        throw new ImportResolveError(filepath, paths, err as Error);
       }
       if (moduleFilePath.startsWith('file://')) {
         // resolve will return file:// URL on Linux and MacOS expect on Windows
@@ -409,46 +366,8 @@ export function importResolve(filepath: string, options?: ImportResolveOptions):
   return moduleFilePath;
 }
 
-/**
- * Module loader function type for V8 snapshot support.
- * Called with the resolved absolute file path, returns the module exports.
- */
-export type SnapshotModuleLoader = (resolvedPath: string) => any;
-
-let _snapshotModuleLoader: SnapshotModuleLoader | undefined;
-
-/**
- * Register a snapshot module loader that intercepts `importModule()` calls.
- *
- * When set, `importModule()` delegates to this loader instead of calling
- * `import()` or `require()`. This is used by the V8 snapshot entry generator
- * to provide pre-bundled modules — the bundler generates a static module map
- * from the egg manifest and registers it via this API.
- *
- * Also sets `isESM = false` because the snapshot bundle is CJS and
- * esbuild's `import.meta` polyfill causes incorrect ESM detection.
- */
-export function setSnapshotModuleLoader(loader: SnapshotModuleLoader): void {
-  _snapshotModuleLoader = loader;
-  isESM = false;
-}
-
 export async function importModule(filepath: string, options?: ImportModuleOptions): Promise<any> {
   const moduleFilePath = importResolve(filepath, options);
-
-  if (_snapshotModuleLoader) {
-    let obj = _snapshotModuleLoader(moduleFilePath);
-    if (obj && typeof obj === 'object' && obj.default?.__esModule === true && obj.default && 'default' in obj.default) {
-      obj = obj.default;
-    }
-    if (options?.importDefaultOnly) {
-      if (obj && typeof obj === 'object' && 'default' in obj) {
-        obj = obj.default;
-      }
-    }
-    return obj;
-  }
-
   let obj: any;
   if (isESM) {
     // esm
@@ -462,7 +381,7 @@ export async function importModule(filepath: string, options?: ImportModuleOptio
     //   one: 1,
     //   [Symbol(Symbol.toStringTag)]: 'Module'
     // }
-    if (obj?.default?.__esModule === true && obj.default && 'default' in obj.default) {
+    if (obj?.default?.__esModule === true && 'default' in obj?.default) {
       // 兼容 cjs 模拟 esm 的导出格式
       // {
       //   __esModule: true,
