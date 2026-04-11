@@ -346,13 +346,18 @@ export function importResolve(filepath: string, options?: ImportResolveOptions):
       try {
         moduleFilePath = import.meta.resolve(filepath);
       } catch (err) {
-        // === DIAG: Fallback 1 only — isolating perf regression ===
+        // === DIAG: log every Fallback 1 invocation to stderr ===
+        const t0 = Date.now();
         debug('[importResolve:error] import.meta.resolve %o => %o, options: %o', filepath, err, options);
         try {
           moduleFilePath = getRequire().resolve(filepath, { paths });
+          const dt = Date.now() - t0;
+          process.stderr.write(`[DIAG-FB1-OK] ${dt}ms ${filepath} => ${moduleFilePath}\n`);
           debug('[importResolve:requireResolveFallback] %o => %o', filepath, moduleFilePath);
           return moduleFilePath;
         } catch {
+          const dt = Date.now() - t0;
+          process.stderr.write(`[DIAG-FB1-FAIL] ${dt}ms ${filepath}\n`);
           throw new ImportResolveError(filepath, paths, err as Error);
         }
       }
